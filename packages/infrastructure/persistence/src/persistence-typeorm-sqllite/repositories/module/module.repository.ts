@@ -603,6 +603,81 @@ export class TypeOrmModuleRepository implements ModuleRepository {
     }
   }
 
+  async moduleTagIdMapExists(
+    spfModuleSystemId: number,
+    moduleTagIdMapSystemId: number,
+  ): Promise<boolean> {
+    const sessionId = this.uow.getWriteContext().session.sessionId;
+    return this.tkvOverlayFetcher.fetchModuleTagIdMap(
+      moduleTagIdMapSystemId,
+      spfModuleSystemId,
+      sessionId,
+    );
+  }
+
+  async tkvExists(
+    moduleTagIdMapSystemId: number,
+    tkvSystemId: number,
+  ): Promise<boolean> {
+    const sessionId = this.uow.getWriteContext().session.sessionId;
+    const row = await this.tkvOverlayFetcher.fetchTkv(
+      tkvSystemId,
+      moduleTagIdMapSystemId,
+      sessionId,
+    );
+    return row !== null;
+  }
+
+  async getExistingTkvPayloads(
+    _moduleTagIdMapSystemId: number,
+    tkvSystemId: number,
+  ): Promise<ExistingPayloadRow[]> {
+    const sessionId = this.uow.getWriteContext().session.sessionId;
+    const rows = await this.tkvOverlayFetcher.fetchPayloads(
+      tkvSystemId,
+      sessionId,
+    );
+    return rows.map(r => ({
+      systemId: r.systemId,
+      parameterSystemId: r.parameterSystemId,
+    }));
+  }
+
+  async setTkvCalData(
+    moduleTagIdMapSystemId: number,
+    tkvSystemId: number,
+    payloadUpdates: CkvPayloadUpdate[],
+    uiPersistence?: string,
+  ): Promise<void> {
+    const {session, groupId} = this.uow.getWriteContext();
+    if (payloadUpdates.length > 0) {
+      await this.writer.writeDeltaBatch(
+        payloadUpdates.map(u => ({
+          targetTable: ENTITY_NAMES.TkvParameterPayload,
+          targetSystemId: u.payloadSystemId,
+          aggregateId: moduleTagIdMapSystemId,
+          delta: {payload: u.payload},
+        })),
+        session.sessionId,
+        groupId,
+        this.manager,
+      );
+    }
+    if (uiPersistence !== undefined) {
+      await this.writer.writeDelta(
+        {
+          targetTable: ENTITY_NAMES.Tkv,
+          targetSystemId: tkvSystemId,
+          aggregateId: moduleTagIdMapSystemId,
+          delta: {uiPersistence},
+        },
+        session.sessionId,
+        groupId,
+        this.manager,
+      );
+    }
+  }
+
   createCkv(
     _kvData: unknown,
     _moduleSystemId: number,
