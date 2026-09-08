@@ -134,9 +134,9 @@ export interface ModuleRepository {
     uiPersistence?: string,
   ): Promise<void>;
 
-  moduleTagIdMapExists(
+  tagExists(
     spfModuleSystemId: number,
-    moduleTagIdMapSystemId: number,
+    tagSystemId: number,
   ): Promise<boolean>;
 
   tkvExists(tkvSystemId: number): Promise<boolean>;

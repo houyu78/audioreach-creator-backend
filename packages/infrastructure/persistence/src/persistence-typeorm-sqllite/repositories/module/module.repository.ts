@@ -603,13 +603,13 @@ export class TypeOrmModuleRepository implements ModuleRepository {
     }
   }
 
-  async moduleTagIdMapExists(
+  async tagExists(
     spfModuleSystemId: number,
-    moduleTagIdMapSystemId: number,
+    tagSystemId: number,
   ): Promise<boolean> {
     const sessionId = this.uow.getWriteContext().session.sessionId;
     return this.tkvOverlayFetcher.fetchModuleTagIdMap(
-      moduleTagIdMapSystemId,
+      tagSystemId,
       spfModuleSystemId,
       sessionId,
     );

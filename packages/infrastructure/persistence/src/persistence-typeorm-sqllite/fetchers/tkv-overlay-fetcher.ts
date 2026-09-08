@@ -230,10 +230,19 @@ export class TkvOverlayFetcher {
    * Overlay aggregateId for ModuleTagIdMap = spfModuleSystemId.
    */
   async fetchModuleTagIdMap(
-    moduleTagIdMapSystemId: number,
+    tagSystemId: number,
     spfModuleSystemId: number,
     sessionId: number | null,
   ): Promise<boolean> {
+    const baseRow = await this.manager
+      .getRepository(ENTITY_NAMES.ModuleTagIdMap)
+      .findOne({
+        where: {tagDefinitionSystemId: tagSystemId, spfModuleSystemId},
+        select: ['systemId'],
+      });
+
+    if (baseRow === null) return false;
+
     if (sessionId !== null) {
       const actions = await this.editActionsSvc.getByAggregateAndTable(
         sessionId,
@@ -241,16 +250,14 @@ export class TkvOverlayFetcher {
         ENTITY_NAMES.ModuleTagIdMap,
       );
       const filteredActions = actions.filter(
-        a => a.targetSystemId === moduleTagIdMapSystemId,
+        a => a.targetSystemId === baseRow.systemId,
       );
       if (filteredActions.length > 0) {
         return this.overlay.applyToSingle(null, filteredActions) !== null;
       }
     }
-    const count = await this.manager
-      .getRepository(ENTITY_NAMES.ModuleTagIdMap)
-      .count({where: {systemId: moduleTagIdMapSystemId, spfModuleSystemId}});
-    return count > 0;
+
+    return true;
   }
 
   // ── Private helpers ────────────────────────────────────────────────────────

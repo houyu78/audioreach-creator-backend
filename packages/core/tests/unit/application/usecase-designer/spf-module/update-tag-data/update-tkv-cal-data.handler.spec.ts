@@ -29,7 +29,7 @@ function makeModuleRepo(
       subgraphSystemId: 3,
       containerSystemId: 4,
     }),
-    moduleTagIdMapExists: jest.fn().mockResolvedValue(true),
+    tagExists: jest.fn().mockResolvedValue(true),
     tkvExists: jest.fn().mockResolvedValue(true),
     getTkvPayloads: jest
       .fn()
@@ -128,9 +128,9 @@ describe('UpdateTkvCalDataHandler', () => {
     );
   });
 
-  it('throws ResourceNotFoundException when moduleTagIdMap not found', async () => {
+  it('throws ResourceNotFoundException when tag not found', async () => {
     const moduleRepo = makeModuleRepo({
-      moduleTagIdMapExists: jest.fn().mockResolvedValue(false),
+      tagExists: jest.fn().mockResolvedValue(false),
     });
     const uow = makeUow(moduleRepo, makeDefRepo());
     const handler = new UpdateTkvCalDataHandler(uow);

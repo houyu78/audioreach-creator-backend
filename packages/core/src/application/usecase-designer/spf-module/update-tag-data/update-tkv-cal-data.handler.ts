@@ -39,7 +39,7 @@ export class UpdateTkvCalDataHandler {
     if (!spfModule) throw new ResourceNotFoundException('SpfModule not found');
 
     // Step 2a: validate tag map exists under this SpfModule
-    const tagMapExists = await moduleRepo.moduleTagIdMapExists(
+    const tagMapExists = await moduleRepo.tagExists(
       command.spfModuleSystemId,
       command.tagSystemId,
     );

@@ -180,20 +180,20 @@ describe('TypeOrmModuleRepository — TKV cal data methods', () => {
     await qr.release();
   });
 
-  describe('moduleTagIdMapExists', () => {
+  describe('tagExists', () => {
     it('returns true when the tag map row is in DB', async () => {
       const repo = makeRepo(qr, sessionId);
-      expect(await repo.moduleTagIdMapExists(MODULE_ID, TAG_MAP_ID)).toBe(true);
+      expect(await repo.tagExists(MODULE_ID, TAG_DEF_ID)).toBe(true);
     });
 
     it('returns false when spfModuleSystemId does not match', async () => {
       const repo = makeRepo(qr, sessionId);
-      expect(await repo.moduleTagIdMapExists(9999, TAG_MAP_ID)).toBe(false);
+      expect(await repo.tagExists(9999, TAG_DEF_ID)).toBe(false);
     });
 
-    it('returns false when moduleTagIdMapSystemId does not exist', async () => {
+    it('returns false when tagSystemId does not exist', async () => {
       const repo = makeRepo(qr, sessionId);
-      expect(await repo.moduleTagIdMapExists(MODULE_ID, 9999)).toBe(false);
+      expect(await repo.tagExists(MODULE_ID, 9999)).toBe(false);
     });
   });
 
