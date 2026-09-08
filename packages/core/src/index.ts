@@ -63,7 +63,7 @@ export type {EditOptions} from './application/ports/persistence/edit-options.js'
 export type {
   ModuleRepository,
   ExistingPayloadRow,
-  CkvPayloadUpdate,
+  PayloadUpdate,
 } from './application/ports/persistence/repositories/module/module.repository.js';
 export type {ContainerRepository} from './application/ports/persistence/repositories/container/container.repository.js';
 export type {

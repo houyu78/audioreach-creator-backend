@@ -117,7 +117,7 @@ describe('GetTkvCalibrationDataHandler', () => {
     expect(TkvCalDataDtoSchema.safeParse(result.data).success).toBe(true);
   });
 
-  it('passes tagSystemId to getTkv', async () => {
+  it('passes correct args to getTkv', async () => {
     const services = makeServices();
     const handler = new GetTkvCalibrationDataHandler(services);
     await handler.handle(makeQuery());
@@ -126,7 +126,6 @@ describe('GetTkvCalibrationDataHandler', () => {
     expect(getTkv).toHaveBeenCalledWith(
       expect.any(Number), // fileSystemId
       expect.any(Number), // moduleSystemId
-      3, // tagSystemId (from query)
       10, // tkvSystemId
     );
   });

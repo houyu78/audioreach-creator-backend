@@ -8,7 +8,7 @@ import {SESSION_MODE} from '../../../shared/change-vocabulary.js';
 import type {SessionMode} from '../../../shared/change-vocabulary.js';
 import type {ParameterDto} from '../dto/parameter-dto.js';
 import type {ParameterElementDto} from '../dto/element-dto.js';
-import {InvalidOperationException} from '../../../../shared/exceptions/index.js';
+import {parseId} from '../../shared/parse-id.js';
 
 export class PutCkvCalDataCommand extends BaseCommand {
   static override readonly requiresSession = true;
@@ -40,23 +40,4 @@ export class PutCkvCalDataCommand extends BaseCommand {
     }));
     this.uiPersistence = uiPersistence;
   }
-}
-
-function parseId(value: string, paramName: string): number {
-  const trimmed = value.trim();
-  const num =
-    trimmed.startsWith('0x') || trimmed.startsWith('0X')
-      ? Number.parseInt(trimmed, 16)
-      : Number.parseInt(trimmed, 10);
-  if (Number.isNaN(num) || !Number.isFinite(num)) {
-    throw new InvalidOperationException(
-      `${paramName} must be an integer, got: ${value}`,
-    );
-  }
-  if (num <= 0) {
-    throw new InvalidOperationException(
-      `${paramName} must be positive, got: ${value}`,
-    );
-  }
-  return num;
 }

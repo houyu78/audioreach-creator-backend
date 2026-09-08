@@ -263,9 +263,9 @@ describe('PUT /arc-api/v1/projects/:projectId/spf-modules/:spfModuleSystemId/cal
     }
   }, 60_000);
 
-  // ── 207: some parameters fail (no existing payload row) ──────────────────
+  // ── 404: unknown parameter systemId ─────────────────────────────────────
 
-  it('returns 207 when some parameter systemIds have no existing payload row', async () => {
+  it('returns 404 when a parameter systemId has no existing payload row', async () => {
     const body = {
       parameters: [
         roundTripParams[0], // valid — from GET
@@ -279,16 +279,12 @@ describe('PUT /arc-api/v1/projects/:projectId/spf-modules/:spfModuleSystemId/cal
       .set('Authorization', `Bearer ${authToken}`)
       .send(body)
       .timeout(30_000);
-    expect(res.status).toBe(207);
-    expect(res.body.data).toBeDefined();
-    expect(Array.isArray(res.body.issues)).toBe(true);
-    expect(res.body.issues.length).toBeGreaterThan(0);
-    expect(res.body.issues[0].code).toBe('PARAM_PAYLOAD_NOT_FOUND');
+    expect(res.status).toBe(404);
   }, 60_000);
 
-  // ── 207: all parameters fail ──────────────────────────────────────────────
+  // ── 404: all parameters unknown ──────────────────────────────────────────
 
-  it('returns 207 with no data when all parameter systemIds have no existing payload row', async () => {
+  it('returns 404 when all parameter systemIds have no existing payload row', async () => {
     const body = {
       parameters: [
         {systemId: '999999998', elements: parameters[0].elements},
@@ -302,13 +298,7 @@ describe('PUT /arc-api/v1/projects/:projectId/spf-modules/:spfModuleSystemId/cal
       .set('Authorization', `Bearer ${authToken}`)
       .send(body)
       .timeout(30_000);
-    expect(res.status).toBe(207);
-    expect(res.body.data).toBeUndefined();
-    expect(Array.isArray(res.body.issues)).toBe(true);
-    expect(res.body.issues.length).toBe(2);
-    expect(
-      res.body.issues.every((i: any) => i.code === 'PARAM_PAYLOAD_NOT_FOUND'),
-    ).toBe(true);
+    expect(res.status).toBe(404);
   }, 60_000);
 
   // ── 200: uiPersistence written ────────────────────────────────────────────

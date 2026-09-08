@@ -107,7 +107,7 @@ describe('DbTkvCalibrationQueryService', () => {
       const ds = getTestDataSource();
       await seedAll(ds);
       const svc = makeService(ds);
-      const result = await svc.getTkv(FILE_ID, MODULE_ID, TAG_MAP_ID, TKV_ID);
+      const result = await svc.getTkv(FILE_ID, MODULE_ID, TKV_ID);
       expect(result).not.toBeNull();
       expect(result?.systemId).toBe(TKV_ID);
       expect(result?.moduleTagIdMapSystemId).toBe(TAG_MAP_ID);
@@ -117,14 +117,7 @@ describe('DbTkvCalibrationQueryService', () => {
       const ds = getTestDataSource();
       await seedAll(ds);
       const svc = makeService(ds);
-      expect(await svc.getTkv(FILE_ID, MODULE_ID, TAG_MAP_ID, 9999)).toBeNull();
-    });
-
-    it('returns null when tkvSystemId is under wrong moduleTagIdMapSystemId', async () => {
-      const ds = getTestDataSource();
-      await seedAll(ds);
-      const svc = makeService(ds);
-      expect(await svc.getTkv(FILE_ID, MODULE_ID, 9999, TKV_ID)).toBeNull();
+      expect(await svc.getTkv(FILE_ID, MODULE_ID, 9999)).toBeNull();
     });
   });
 

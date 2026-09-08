@@ -3,26 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 import {BaseQuery} from '../../../shared/base-query.js';
-import {InvalidOperationException} from '../../../../shared/exceptions/invalid-operation.exception.js';
-
-/**
- * Parses a string as a decimal or hexadecimal integer.
- * File-private helper — not exported.
- * Throws `InvalidOperationException` if the value is not a valid integer.
- */
-function parseId(value: string, paramName: string): number {
-  const trimmed = value.trim();
-  const num =
-    trimmed.startsWith('0x') || trimmed.startsWith('0X')
-      ? Number.parseInt(trimmed, 16)
-      : Number.parseInt(trimmed, 10);
-  if (Number.isNaN(num)) {
-    throw new InvalidOperationException(
-      `Invalid ${paramName}: "${value}" is not a valid integer or hex value`,
-    );
-  }
-  return num;
-}
+import {parseId} from '../../shared/parse-id.js';
 
 /**
  * Query to retrieve calibration data for a specific CKV (Calibration Key-Value)

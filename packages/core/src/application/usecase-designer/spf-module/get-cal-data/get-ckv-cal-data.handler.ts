@@ -5,23 +5,14 @@
 import type {QueryHandler} from '../../../orchestration/cqrs/queries/query-handler.js';
 import type {QueryServices} from '../../../ports/persistence/query-services/query-services.js';
 import type {GetCkvCalibrationDataQuery} from './get-ckv-cal-data.query.js';
-import type {ParameterCalibrationReadModel} from './ckv-calibration-read-model.js';
 import type {ParameterPayloadReadModel} from '../../../ports/persistence/query-services/spf-module/ckv/ckv-read-model.js';
-import type {ParameterDefinitionReadModel} from '../../../ports/persistence/query-services/shared/parameter-definition-read-model.js';
-import {parseParameterData} from '../../shared/parse-elements.js';
-import type {ElementData} from '../../../../domain/entities/definitions/common/types/element-data.js';
 import {ResourceNotFoundException} from '../../../../shared/exceptions/resource-not-found.exception.js';
-import {
-  NullPayloadError,
-  ParameterDefinitionMissingError,
-} from '../../../../shared/errors/parameter.errors.js';
 import type {Logger} from '../../../../shared/types/logger.interface.js';
 import {Result, RESULT_KIND} from '../../../shared/result/result.js';
-import {ISSUE_CODE} from '../../../../shared/issues/operational-codes.js';
-import {IssueSeverity} from '../../../../shared/issues/severity.js';
+import {IssueFactory} from '../../../../shared/issues/factories.js';
 import type {CkvCalDataDto} from './ckv-cal-data-dto.js';
 import {mapCkvCalDataDto} from './ckv-cal-data-dto.js';
-import type {ParamType} from '../../../../domain/entities/definitions/common/types/param-type.js';
+import {buildParameterModels} from '../../shared/build-parameter-models.js';
 
 export class GetCkvCalibrationDataHandler implements QueryHandler<
   GetCkvCalibrationDataQuery,
@@ -93,65 +84,21 @@ export class GetCkvCalibrationDataHandler implements QueryHandler<
           })()
         : undefined;
 
-    const parameters = this.buildParameterDataModels(
+    const parameters = buildParameterModels(
       payloads,
       parameterDefinitions,
+      this.logger,
     );
 
     const dto = mapCkvCalDataDto(ckv, parameters);
 
     if (missingParamSystemIds && missingParamSystemIds.length > 0) {
-      const issues = missingParamSystemIds.map(id => ({
-        code: ISSUE_CODE.PARAM_PAYLOAD_NOT_FOUND,
-        message: `No calibration payload found for parameter system ID ${id}`,
-        severity: IssueSeverity.Error,
-      }));
+      const issues = missingParamSystemIds.map(id =>
+        IssueFactory.paramPayloadNotFound(id),
+      );
       return Result.partial(dto, issues);
     }
 
     return Result.ok(dto);
-  }
-
-  /**
-   * Joins payload rows to definition rows by parameterSystemId → systemId,
-   * then parses each non-null payload with ParameterDataParser.
-   *
-   * Throws ParameterDefinitionMissingError when a payload is present but its
-   * definition is absent — a database integrity violation that must not be silently swallowed.
-   */
-  private buildParameterDataModels(
-    payloads: ParameterPayloadReadModel[],
-    definitions: ParameterDefinitionReadModel[],
-  ): ParameterCalibrationReadModel[] {
-    const defMap = new Map(definitions.map(d => [d.systemId, d]));
-
-    return payloads.map(p => {
-      if (p.payload === null) {
-        throw new NullPayloadError(p.parameterSystemId);
-      }
-
-      const def = defMap.get(p.parameterSystemId);
-
-      if (def === undefined) {
-        throw new ParameterDefinitionMissingError(p.parameterSystemId);
-      }
-
-      const parsedData: ElementData[] = parseParameterData(
-        p.payload,
-        def.elementsStructure ?? '',
-        this.logger,
-      );
-
-      return {
-        systemId: p.systemId,
-        parameterId: def.paramId,
-        name: def.name ?? String(def.paramId),
-        description: def.description,
-        isReadOnly: def.isReadOnly ?? false,
-        isHidden: undefined,
-        pidType: def.pidType as ParamType,
-        parsedData,
-      };
-    });
   }
 }

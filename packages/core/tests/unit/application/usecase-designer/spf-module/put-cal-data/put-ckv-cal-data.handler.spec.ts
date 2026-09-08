@@ -9,7 +9,7 @@ import type {
   ModuleRepository,
   ModuleDefinitionRepository,
 } from '@arc/core';
-import {ResourceNotFoundException} from '../../../../../../src/shared/exceptions/index.js';
+import {ResourceNotFoundException, InvalidOperationException} from '../../../../../../src/shared/exceptions/index.js';
 import {PutCkvCalDataHandler} from '../../../../../../src/application/usecase-designer/spf-module/put-cal-data/put-ckv-cal-data.handler.js';
 import {PutCkvCalDataCommand} from '../../../../../../src/application/usecase-designer/spf-module/put-cal-data/put-ckv-cal-data.command.js';
 
@@ -29,10 +29,10 @@ function makeModuleRepo(
       containerSystemId: 4,
     }),
     ckvExists: jest.fn().mockResolvedValue(true),
-    getExistingCkvPayloads: jest
+    getCkvPayloads: jest
       .fn()
       .mockResolvedValue([{systemId: 100, parameterSystemId: 200}]),
-    setCkvCalData: jest.fn().mockResolvedValue(undefined),
+    setCkvData: jest.fn().mockResolvedValue(undefined),
     findModuleForPatch: jest.fn(),
     renameModule: jest.fn(),
     changeContainer: jest.fn(),
@@ -133,19 +133,18 @@ describe('PutCkvCalDataHandler', () => {
     );
   });
 
-  it('adds to failures when no existing payload row (FR15)', async () => {
+  it('throws ResourceNotFoundException when no existing payload row (FR15)', async () => {
     const moduleRepo = makeModuleRepo({
-      getExistingCkvPayloads: jest.fn().mockResolvedValue([]),
+      getCkvPayloads: jest.fn().mockResolvedValue([]),
     });
     const uow = makeUow(moduleRepo, makeDefRepo());
     const handler = new PutCkvCalDataHandler(uow);
-    const result = await handler.handle(makeCommand());
-    expect(result.issues).toHaveLength(1);
-    expect(result.issues[0].code).toBe('PARAM_PAYLOAD_NOT_FOUND');
-    expect(result.data.succeededParamSystemIds).toHaveLength(0);
+    await expect(handler.handle(makeCommand())).rejects.toThrow(
+      ResourceNotFoundException,
+    );
   });
 
-  it('adds to failures when parameter is read-only', async () => {
+  it('throws InvalidOperationException when parameter is read-only', async () => {
     const defRepo = makeDefRepo({
       getParameterDefinitions: jest.fn().mockResolvedValue([
         {
@@ -159,27 +158,28 @@ describe('PutCkvCalDataHandler', () => {
     });
     const uow = makeUow(makeModuleRepo(), defRepo);
     const handler = new PutCkvCalDataHandler(uow);
-    const result = await handler.handle(makeCommand());
-    expect(result.issues[0].message).toMatch(/read-only/i);
+    await expect(handler.handle(makeCommand())).rejects.toThrow(
+      InvalidOperationException,
+    );
   });
 
-  it('adds to failures on serialization failure (value out of range)', async () => {
+  it('throws InvalidOperationException on serialization failure (value out of range)', async () => {
     const uow = makeUow(makeModuleRepo(), makeDefRepo());
     const handler = new PutCkvCalDataHandler(uow);
     // Int16 max is 32767 — 99999 should fail
-    const result = await handler.handle(makeCommand('100', '99999'));
-    expect(result.issues[0].message).toMatch(/range|Int16/i);
+    await expect(handler.handle(makeCommand('100', '99999'))).rejects.toThrow(
+      InvalidOperationException,
+    );
   });
 
-  it('calls setCkvCalData and returns groupId on success', async () => {
+  it('calls setCkvData and returns groupId on success', async () => {
     const moduleRepo = makeModuleRepo();
     const uow = makeUow(moduleRepo, makeDefRepo());
     const handler = new PutCkvCalDataHandler(uow);
     const result = await handler.handle(makeCommand());
     expect(result.data.succeededParamSystemIds).toEqual([100]);
-    expect(result.issues ?? []).toHaveLength(0);
     expect(result.data.groupId).toBe('group-abc');
-    expect(moduleRepo.setCkvCalData).toHaveBeenCalledWith(
+    expect(moduleRepo.setCkvData).toHaveBeenCalledWith(
       MODULE_ID,
       CKV_ID,
       expect.arrayContaining([expect.objectContaining({payloadSystemId: 100})]),
@@ -187,9 +187,9 @@ describe('PutCkvCalDataHandler', () => {
     );
   });
 
-  it('calls rollback and re-throws if setCkvCalData throws', async () => {
+  it('calls rollback and re-throws if setCkvData throws', async () => {
     const moduleRepo = makeModuleRepo({
-      setCkvCalData: jest.fn().mockRejectedValue(new Error('db error')),
+      setCkvData: jest.fn().mockRejectedValue(new Error('db error')),
     });
     const uow = makeUow(moduleRepo, makeDefRepo());
     (uow.isInTransaction as jest.Mock).mockReturnValue(true);
@@ -198,7 +198,7 @@ describe('PutCkvCalDataHandler', () => {
     expect(uow.rollback).toHaveBeenCalled();
   });
 
-  it('passes uiPersistence to setCkvCalData when present', async () => {
+  it('passes uiPersistence to setCkvData when present', async () => {
     const moduleRepo = makeModuleRepo();
     const uow = makeUow(moduleRepo, makeDefRepo());
     const handler = new PutCkvCalDataHandler(uow);
@@ -224,7 +224,7 @@ describe('PutCkvCalDataHandler', () => {
       'IIR pregain = 5',
     );
     await handler.handle(cmd);
-    const call = (moduleRepo.setCkvCalData as jest.Mock).mock.calls[0];
+    const call = (moduleRepo.setCkvData as jest.Mock).mock.calls[0];
     expect(call[3]).toBe('IIR pregain = 5');
   });
 });

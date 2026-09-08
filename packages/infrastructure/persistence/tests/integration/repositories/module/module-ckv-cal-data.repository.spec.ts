@@ -198,20 +198,20 @@ describe('TypeOrmModuleRepository — CKV cal data', () => {
     expect(result).toBe(false);
   });
 
-  it('getExistingCkvPayloads returns rows with systemId and parameterSystemId', async () => {
+  it('getCkvPayloads returns rows with systemId and parameterSystemId', async () => {
     await seedPayload(ds);
     const repo = makeRepo(qr, sessionId);
-    const results = await repo.getExistingCkvPayloads(MODULE_ID, CKV_ID);
+    const results = await repo.getCkvPayloads(MODULE_ID, CKV_ID);
     expect(results).toHaveLength(1);
     expect(results[0].systemId).toBe(PAYLOAD_ID);
     expect(results[0].parameterSystemId).toBe(PARAM_DEF_ID);
   });
 
-  it('setCkvCalData writes edit_actions with aggregateId=spfModuleSystemId and correct base64 payload', async () => {
+  it('setCkvData writes edit_actions with aggregateId=spfModuleSystemId and correct base64 payload', async () => {
     await seedPayload(ds);
     const repo = makeRepo(qr, sessionId);
     const payload = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
-    await repo.setCkvCalData(MODULE_ID, CKV_ID, [
+    await repo.setCkvData(MODULE_ID, CKV_ID, [
       {payloadSystemId: PAYLOAD_ID, payload},
     ]);
     const rows: Array<{
@@ -236,10 +236,10 @@ describe('TypeOrmModuleRepository — CKV cal data', () => {
     );
   });
 
-  it('setCkvCalData writes uiPersistence edit_action on Ckv row when provided', async () => {
+  it('setCkvData writes uiPersistence edit_action on Ckv row when provided', async () => {
     const repo = makeRepo(qr, sessionId);
     const uiPersistence = new Uint8Array([0x01, 0x02, 0x03]);
-    await repo.setCkvCalData(MODULE_ID, CKV_ID, [], uiPersistence);
+    await repo.setCkvData(MODULE_ID, CKV_ID, [], uiPersistence);
     const rows: Array<{
       target_table: string;
       aggregate_id: number;
@@ -262,9 +262,9 @@ describe('TypeOrmModuleRepository — CKV cal data', () => {
     );
   });
 
-  it('setCkvCalData with empty payloadUpdates and uiPersistence only writes one edit_action', async () => {
+  it('setCkvData with empty payloadUpdates and uiPersistence only writes one edit_action', async () => {
     const repo = makeRepo(qr, sessionId);
-    await repo.setCkvCalData(MODULE_ID, CKV_ID, [], new Uint8Array([0xff]));
+    await repo.setCkvData(MODULE_ID, CKV_ID, [], new Uint8Array([0xff]));
     const rows: Array<unknown> = await ds.query(
       `SELECT * FROM edit_actions WHERE session_id = ?`,
       [sessionId],

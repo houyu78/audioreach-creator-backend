@@ -14,7 +14,6 @@ export interface TkvQueryService {
   getTkv(
     fileSystemId: number,
     moduleSystemId: number,
-    moduleTagIdMapSystemId: number,
     tkvSystemId: number,
   ): Promise<TkvReadModel | null>;
 

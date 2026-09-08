@@ -9,7 +9,7 @@ import type {
   ModuleRepository,
   ModuleDefinitionRepository,
 } from '@arc/core';
-import {ResourceNotFoundException} from '../../../../../../src/shared/exceptions/index.js';
+import {ResourceNotFoundException, InvalidOperationException} from '../../../../../../src/shared/exceptions/index.js';
 import {UpdateTkvCalDataHandler} from '../../../../../../src/application/usecase-designer/spf-module/update-tag-data/update-tkv-cal-data.handler.js';
 import {UpdateTkvCalDataCommand} from '../../../../../../src/application/usecase-designer/spf-module/update-tag-data/update-tkv-cal-data.command.js';
 
@@ -31,13 +31,13 @@ function makeModuleRepo(
     }),
     moduleTagIdMapExists: jest.fn().mockResolvedValue(true),
     tkvExists: jest.fn().mockResolvedValue(true),
-    getExistingTkvPayloads: jest
+    getTkvPayloads: jest
       .fn()
       .mockResolvedValue([{systemId: 100, parameterSystemId: 200}]),
-    setTkvCalData: jest.fn().mockResolvedValue(undefined),
+    setTkvData: jest.fn().mockResolvedValue(undefined),
     ckvExists: jest.fn(),
-    getExistingCkvPayloads: jest.fn(),
-    setCkvCalData: jest.fn(),
+    getCkvPayloads: jest.fn(),
+    setCkvData: jest.fn(),
     findModuleForPatch: jest.fn(),
     renameModule: jest.fn(),
     changeContainer: jest.fn(),
@@ -150,19 +150,18 @@ describe('UpdateTkvCalDataHandler', () => {
     );
   });
 
-  it('adds to failures when no existing payload row', async () => {
+  it('throws ResourceNotFoundException when no existing payload row', async () => {
     const moduleRepo = makeModuleRepo({
-      getExistingTkvPayloads: jest.fn().mockResolvedValue([]),
+      getTkvPayloads: jest.fn().mockResolvedValue([]),
     });
     const uow = makeUow(moduleRepo, makeDefRepo());
     const handler = new UpdateTkvCalDataHandler(uow);
-    const result = await handler.handle(makeCommand());
-    expect(result.issues).toHaveLength(1);
-    expect(result.issues[0].code).toBe('PARAM_PAYLOAD_NOT_FOUND');
-    expect(result.data.succeededParamSystemIds).toHaveLength(0);
+    await expect(handler.handle(makeCommand())).rejects.toThrow(
+      ResourceNotFoundException,
+    );
   });
 
-  it('adds to failures when parameter is read-only', async () => {
+  it('throws InvalidOperationException when parameter is read-only', async () => {
     const defRepo = makeDefRepo({
       getParameterDefinitions: jest.fn().mockResolvedValue([
         {
@@ -176,26 +175,27 @@ describe('UpdateTkvCalDataHandler', () => {
     });
     const uow = makeUow(makeModuleRepo(), defRepo);
     const handler = new UpdateTkvCalDataHandler(uow);
-    const result = await handler.handle(makeCommand());
-    expect(result.issues[0].message).toMatch(/read-only/i);
+    await expect(handler.handle(makeCommand())).rejects.toThrow(
+      InvalidOperationException,
+    );
   });
 
-  it('adds to failures on serialization failure (value out of range)', async () => {
+  it('throws InvalidOperationException on serialization failure (value out of range)', async () => {
     const uow = makeUow(makeModuleRepo(), makeDefRepo());
     const handler = new UpdateTkvCalDataHandler(uow);
-    const result = await handler.handle(makeCommand('100', '99999'));
-    expect(result.issues[0].message).toMatch(/range|Int16/i);
+    await expect(handler.handle(makeCommand('100', '99999'))).rejects.toThrow(
+      InvalidOperationException,
+    );
   });
 
-  it('calls setTkvCalData and returns groupId on success', async () => {
+  it('calls setTkvData and returns groupId on success', async () => {
     const moduleRepo = makeModuleRepo();
     const uow = makeUow(moduleRepo, makeDefRepo());
     const handler = new UpdateTkvCalDataHandler(uow);
     const result = await handler.handle(makeCommand());
     expect(result.data.succeededParamSystemIds).toEqual([100]);
-    expect(result.issues ?? []).toHaveLength(0);
     expect(result.data.groupId).toBe('group-abc');
-    expect(moduleRepo.setTkvCalData).toHaveBeenCalledWith(
+    expect(moduleRepo.setTkvData).toHaveBeenCalledWith(
       TAG_MAP_ID,
       TKV_ID,
       expect.arrayContaining([expect.objectContaining({payloadSystemId: 100})]),
@@ -203,9 +203,9 @@ describe('UpdateTkvCalDataHandler', () => {
     );
   });
 
-  it('calls rollback and re-throws if setTkvCalData throws', async () => {
+  it('calls rollback and re-throws if setTkvData throws', async () => {
     const moduleRepo = makeModuleRepo({
-      setTkvCalData: jest.fn().mockRejectedValue(new Error('write failed')),
+      setTkvData: jest.fn().mockRejectedValue(new Error('write failed')),
     });
     const uow = makeUow(moduleRepo, makeDefRepo());
     (uow.isInTransaction as jest.Mock).mockReturnValue(true);
@@ -214,7 +214,7 @@ describe('UpdateTkvCalDataHandler', () => {
     expect(uow.rollback).toHaveBeenCalled();
   });
 
-  it('passes uiPersistence to setTkvCalData when present', async () => {
+  it('passes uiPersistence to setTkvData when present', async () => {
     const moduleRepo = makeModuleRepo();
     const uow = makeUow(moduleRepo, makeDefRepo());
     const handler = new UpdateTkvCalDataHandler(uow);
@@ -241,7 +241,7 @@ describe('UpdateTkvCalDataHandler', () => {
       'IIR pregain = 5',
     );
     await handler.handle(cmd);
-    const call = (moduleRepo.setTkvCalData as jest.Mock).mock.calls[0];
+    const call = (moduleRepo.setTkvData as jest.Mock).mock.calls[0];
     expect(call[3]).toBe('IIR pregain = 5');
   });
 });

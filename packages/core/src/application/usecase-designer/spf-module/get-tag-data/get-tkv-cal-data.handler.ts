@@ -5,23 +5,14 @@
 import type {QueryHandler} from '../../../orchestration/cqrs/queries/query-handler.js';
 import type {QueryServices} from '../../../ports/persistence/query-services/query-services.js';
 import type {GetTkvCalibrationDataQuery} from './get-tkv-cal-data.query.js';
-import type {ParameterCalibrationReadModel} from './tkv-calibration-read-model.js';
 import type {ParameterPayloadReadModel} from '../../../ports/persistence/query-services/spf-module/ckv/ckv-read-model.js';
-import type {ParameterDefinitionReadModel} from '../../../ports/persistence/query-services/shared/parameter-definition-read-model.js';
-import {parseParameterData} from '../../shared/parse-elements.js';
-import type {ElementData} from '../../../../domain/entities/definitions/common/types/element-data.js';
 import {ResourceNotFoundException} from '../../../../shared/exceptions/resource-not-found.exception.js';
-import {
-  NullPayloadError,
-  ParameterDefinitionMissingError,
-} from '../../../../shared/errors/parameter.errors.js';
 import type {Logger} from '../../../../shared/types/logger.interface.js';
 import {Result, RESULT_KIND} from '../../../shared/result/result.js';
-import {ISSUE_CODE} from '../../../../shared/issues/operational-codes.js';
-import {IssueSeverity} from '../../../../shared/issues/severity.js';
+import {IssueFactory} from '../../../../shared/issues/factories.js';
 import type {TkvCalDataDto} from './tkv-cal-data-dto.js';
 import {mapTkvCalDataDto} from './tkv-cal-data-dto.js';
-import type {ParamType} from '../../../../domain/entities/definitions/common/types/param-type.js';
+import {buildParameterModels} from '../../shared/build-parameter-models.js';
 
 export class GetTkvCalibrationDataHandler implements QueryHandler<
   GetTkvCalibrationDataQuery,
@@ -57,7 +48,6 @@ export class GetTkvCalibrationDataHandler implements QueryHandler<
       this.queryServices.spfModuleQueryService.tkvQueryService.getTkv(
         fileSystemId,
         query.spfModuleSystemId,
-        query.tagSystemId,
         query.tkvSystemId,
       ),
       this.queryServices.spfModuleQueryService.tkvQueryService.getTkvPayloads(
@@ -94,49 +84,20 @@ export class GetTkvCalibrationDataHandler implements QueryHandler<
           })()
         : undefined;
 
-    const parameters = this.buildParameterDataModels(
+    const parameters = buildParameterModels(
       payloads,
       parameterDefinitions,
+      this.logger,
     );
     const dto = mapTkvCalDataDto(tkv, parameters);
 
     if (missingParamSystemIds && missingParamSystemIds.length > 0) {
-      const issues = missingParamSystemIds.map(id => ({
-        code: ISSUE_CODE.PARAM_PAYLOAD_NOT_FOUND,
-        message: `No tag data payload found for parameter system ID ${id}`,
-        severity: IssueSeverity.Error,
-      }));
+      const issues = missingParamSystemIds.map(id =>
+        IssueFactory.paramPayloadNotFound(id),
+      );
       return Result.partial(dto, issues);
     }
 
     return Result.ok(dto);
-  }
-
-  private buildParameterDataModels(
-    payloads: ParameterPayloadReadModel[],
-    definitions: ParameterDefinitionReadModel[],
-  ): ParameterCalibrationReadModel[] {
-    const defMap = new Map(definitions.map(d => [d.systemId, d]));
-    return payloads.map(p => {
-      if (p.payload === null) throw new NullPayloadError(p.parameterSystemId);
-      const def = defMap.get(p.parameterSystemId);
-      if (def === undefined)
-        throw new ParameterDefinitionMissingError(p.parameterSystemId);
-      const parsedData: ElementData[] = parseParameterData(
-        p.payload,
-        def.elementsStructure ?? '',
-        this.logger,
-      );
-      return {
-        systemId: p.systemId,
-        parameterId: def.paramId,
-        name: def.name ?? String(def.paramId),
-        description: def.description,
-        isReadOnly: def.isReadOnly ?? false,
-        isHidden: undefined,
-        pidType: def.pidType as ParamType,
-        parsedData,
-      };
-    });
   }
 }

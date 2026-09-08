@@ -117,7 +117,7 @@ describe('TkvOverlayFetcher.fetchTkv', () => {
     const ds = getTestDataSource();
     await seedBase(ds);
     const fetcher = makeFetcher(ds);
-    const result = await fetcher.fetchTkv(TKV_ID, TAG_MAP_ID, null);
+    const result = await fetcher.fetchTkv(TKV_ID, null);
     expect(result).not.toBeNull();
     expect(result?.systemId).toBe(TKV_ID);
     expect(result?.moduleTagIdMapSystemId).toBe(TAG_MAP_ID);
@@ -127,14 +127,7 @@ describe('TkvOverlayFetcher.fetchTkv', () => {
     const ds = getTestDataSource();
     await seedBase(ds);
     const fetcher = makeFetcher(ds);
-    expect(await fetcher.fetchTkv(9999, TAG_MAP_ID, null)).toBeNull();
-  });
-
-  it('Tier 1 — returns null when moduleTagIdMapSystemId does not match', async () => {
-    const ds = getTestDataSource();
-    await seedBase(ds);
-    const fetcher = makeFetcher(ds);
-    expect(await fetcher.fetchTkv(TKV_ID, 9999, null)).toBeNull();
+    expect(await fetcher.fetchTkv(9999, null)).toBeNull();
   });
 
   it('Tier 3 — returns null for DELETE edit_action', async () => {
@@ -152,7 +145,7 @@ describe('TkvOverlayFetcher.fetchTkv', () => {
       newValue: null,
     });
     const fetcher = makeFetcher(ds);
-    expect(await fetcher.fetchTkv(TKV_ID, TAG_MAP_ID, sessionId)).toBeNull();
+    expect(await fetcher.fetchTkv(TKV_ID, sessionId)).toBeNull();
   });
 
   it('Tier 3 — returns synthesised row for CREATE edit_action (not in DB)', async () => {
@@ -171,7 +164,7 @@ describe('TkvOverlayFetcher.fetchTkv', () => {
       newValue: {systemId: newTkvId, moduleTagIdMapSystemId: TAG_MAP_ID},
     });
     const fetcher = makeFetcher(ds);
-    const result = await fetcher.fetchTkv(newTkvId, TAG_MAP_ID, sessionId);
+    const result = await fetcher.fetchTkv(newTkvId, sessionId);
     expect(result).not.toBeNull();
     expect(result?.systemId).toBe(newTkvId);
     expect(result?.moduleTagIdMapSystemId).toBe(TAG_MAP_ID);

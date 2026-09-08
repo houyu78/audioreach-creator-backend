@@ -19,7 +19,7 @@ export interface ExistingPayloadRow {
   parameterSystemId: number; // FK → SpfModuleParameterDefinition.systemId
 }
 
-export interface CkvPayloadUpdate {
+export interface PayloadUpdate {
   payloadSystemId: number; // PK of CkvParameterPayload — used as targetSystemId in edit_actions
   payload: Uint8Array;
 }
@@ -122,15 +122,15 @@ export interface ModuleRepository {
 
   ckvExists(spfModuleSystemId: number, ckvSystemId: number): Promise<boolean>;
 
-  getExistingCkvPayloads(
+  getCkvPayloads(
     spfModuleSystemId: number,
     ckvSystemId: number,
   ): Promise<ExistingPayloadRow[]>;
 
-  setCkvCalData(
+  setCkvData(
     spfModuleSystemId: number,
     ckvSystemId: number,
-    payloadUpdates: CkvPayloadUpdate[],
+    payloadUpdates: PayloadUpdate[],
     uiPersistence?: string,
   ): Promise<void>;
 
@@ -139,20 +139,17 @@ export interface ModuleRepository {
     moduleTagIdMapSystemId: number,
   ): Promise<boolean>;
 
-  tkvExists(
-    moduleTagIdMapSystemId: number,
-    tkvSystemId: number,
-  ): Promise<boolean>;
+  tkvExists(tkvSystemId: number): Promise<boolean>;
 
-  getExistingTkvPayloads(
+  getTkvPayloads(
     moduleTagIdMapSystemId: number,
     tkvSystemId: number,
   ): Promise<ExistingPayloadRow[]>;
 
-  setTkvCalData(
+  setTkvData(
     moduleTagIdMapSystemId: number,
     tkvSystemId: number,
-    payloadUpdates: CkvPayloadUpdate[],
+    payloadUpdates: PayloadUpdate[],
     uiPersistence?: string,
   ): Promise<void>;
 }

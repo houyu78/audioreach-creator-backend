@@ -200,25 +200,20 @@ describe('TypeOrmModuleRepository — TKV cal data methods', () => {
   describe('tkvExists', () => {
     it('returns true when the TKV row is in DB', async () => {
       const repo = makeRepo(qr, sessionId);
-      expect(await repo.tkvExists(TAG_MAP_ID, TKV_ID)).toBe(true);
-    });
-
-    it('returns false when moduleTagIdMapSystemId does not match', async () => {
-      const repo = makeRepo(qr, sessionId);
-      expect(await repo.tkvExists(9999, TKV_ID)).toBe(false);
+      expect(await repo.tkvExists(TKV_ID)).toBe(true);
     });
 
     it('returns false when tkvSystemId does not exist', async () => {
       const repo = makeRepo(qr, sessionId);
-      expect(await repo.tkvExists(TAG_MAP_ID, 9999)).toBe(false);
+      expect(await repo.tkvExists(9999)).toBe(false);
     });
   });
 
-  describe('getExistingTkvPayloads', () => {
+  describe('getTkvPayloads', () => {
     it('returns all payload rows for the TKV', async () => {
       await seedPayload(ds);
       const repo = makeRepo(qr, sessionId);
-      const rows = await repo.getExistingTkvPayloads(TAG_MAP_ID, TKV_ID);
+      const rows = await repo.getTkvPayloads(TAG_MAP_ID, TKV_ID);
       expect(rows).toHaveLength(1);
       expect(rows[0].systemId).toBe(PAYLOAD_ID);
       expect(rows[0].parameterSystemId).toBe(PARAM_DEF_ID);
@@ -226,17 +221,17 @@ describe('TypeOrmModuleRepository — TKV cal data methods', () => {
 
     it('returns empty array when no payload rows exist', async () => {
       const repo = makeRepo(qr, sessionId);
-      const rows = await repo.getExistingTkvPayloads(TAG_MAP_ID, TKV_ID);
+      const rows = await repo.getTkvPayloads(TAG_MAP_ID, TKV_ID);
       expect(rows).toHaveLength(0);
     });
   });
 
-  describe('setTkvCalData', () => {
+  describe('setTkvData', () => {
     it('writes edit_actions with aggregateId=moduleTagIdMapSystemId and correct base64 payload', async () => {
       await seedPayload(ds);
       const repo = makeRepo(qr, sessionId);
       const payload = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
-      await repo.setTkvCalData(TAG_MAP_ID, TKV_ID, [
+      await repo.setTkvData(TAG_MAP_ID, TKV_ID, [
         {payloadSystemId: PAYLOAD_ID, payload},
       ]);
       const rows: Array<{
@@ -263,7 +258,7 @@ describe('TypeOrmModuleRepository — TKV cal data methods', () => {
 
     it('writes uiPersistence edit_action on Tkv row when provided', async () => {
       const repo = makeRepo(qr, sessionId);
-      await repo.setTkvCalData(TAG_MAP_ID, TKV_ID, [], 'hello ui');
+      await repo.setTkvData(TAG_MAP_ID, TKV_ID, [], 'hello ui');
       const rows: Array<{
         target_table: string;
         aggregate_id: number;
@@ -284,7 +279,7 @@ describe('TypeOrmModuleRepository — TKV cal data methods', () => {
 
     it('does not write uiPersistence edit_action when uiPersistence is absent', async () => {
       const repo = makeRepo(qr, sessionId);
-      await repo.setTkvCalData(TAG_MAP_ID, TKV_ID, []);
+      await repo.setTkvData(TAG_MAP_ID, TKV_ID, []);
       const rows: Array<unknown> = await ds.query(
         `SELECT * FROM edit_actions WHERE session_id = ?`,
         [sessionId],
@@ -294,7 +289,7 @@ describe('TypeOrmModuleRepository — TKV cal data methods', () => {
 
     it('writes only uiPersistence edit_action when payload batch is empty', async () => {
       const repo = makeRepo(qr, sessionId);
-      await repo.setTkvCalData(TAG_MAP_ID, TKV_ID, [], 'persist');
+      await repo.setTkvData(TAG_MAP_ID, TKV_ID, [], 'persist');
       const rows: Array<unknown> = await ds.query(
         `SELECT * FROM edit_actions WHERE session_id = ?`,
         [sessionId],

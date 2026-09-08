@@ -10,7 +10,7 @@ import type {
   EditOptions,
   SpfModuleBase,
   ExistingPayloadRow,
-  CkvPayloadUpdate,
+  PayloadUpdate,
 } from '@arc/core';
 import {
   CONFIGURATION_INCLUDES,
@@ -552,7 +552,7 @@ export class TypeOrmModuleRepository implements ModuleRepository {
     return row !== null;
   }
 
-  async getExistingCkvPayloads(
+  async getCkvPayloads(
     spfModuleSystemId: number,
     ckvSystemId: number,
   ): Promise<ExistingPayloadRow[]> {
@@ -568,10 +568,10 @@ export class TypeOrmModuleRepository implements ModuleRepository {
     }));
   }
 
-  async setCkvCalData(
+  async setCkvData(
     spfModuleSystemId: number,
     ckvSystemId: number,
-    payloadUpdates: CkvPayloadUpdate[],
+    payloadUpdates: PayloadUpdate[],
     uiPersistence?: string,
   ): Promise<void> {
     const {session, groupId} = this.uow.getWriteContext();
@@ -615,20 +615,16 @@ export class TypeOrmModuleRepository implements ModuleRepository {
     );
   }
 
-  async tkvExists(
-    moduleTagIdMapSystemId: number,
-    tkvSystemId: number,
-  ): Promise<boolean> {
+  async tkvExists(tkvSystemId: number): Promise<boolean> {
     const sessionId = this.uow.getWriteContext().session.sessionId;
     const row = await this.tkvOverlayFetcher.fetchTkv(
       tkvSystemId,
-      moduleTagIdMapSystemId,
       sessionId,
     );
     return row !== null;
   }
 
-  async getExistingTkvPayloads(
+  async getTkvPayloads(
     _moduleTagIdMapSystemId: number,
     tkvSystemId: number,
   ): Promise<ExistingPayloadRow[]> {
@@ -643,10 +639,10 @@ export class TypeOrmModuleRepository implements ModuleRepository {
     }));
   }
 
-  async setTkvCalData(
+  async setTkvData(
     moduleTagIdMapSystemId: number,
     tkvSystemId: number,
-    payloadUpdates: CkvPayloadUpdate[],
+    payloadUpdates: PayloadUpdate[],
     uiPersistence?: string,
   ): Promise<void> {
     const {session, groupId} = this.uow.getWriteContext();
