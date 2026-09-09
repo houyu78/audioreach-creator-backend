@@ -9,7 +9,10 @@ import type {
   ModuleRepository,
   ModuleDefinitionRepository,
 } from '@arc/core';
-import {ResourceNotFoundException, InvalidOperationException} from '../../../../../../src/shared/exceptions/index.js';
+import {
+  ResourceNotFoundException,
+  InvalidOperationException,
+} from '../../../../../../src/shared/exceptions/index.js';
 import {UpdateTkvCalDataHandler} from '../../../../../../src/application/usecase-designer/spf-module/update-tag-data/update-tkv-cal-data.handler.js';
 import {UpdateTkvCalDataCommand} from '../../../../../../src/application/usecase-designer/spf-module/update-tag-data/update-tkv-cal-data.command.js';
 

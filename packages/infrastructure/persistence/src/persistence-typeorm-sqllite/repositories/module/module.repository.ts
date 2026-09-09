@@ -616,10 +616,7 @@ export class TypeOrmModuleRepository implements ModuleRepository {
 
   async tkvExists(tkvSystemId: number): Promise<boolean> {
     const sessionId = this.uow.getWriteContext().session.sessionId;
-    const row = await this.tkvOverlayFetcher.fetchTkv(
-      tkvSystemId,
-      sessionId,
-    );
+    const row = await this.tkvOverlayFetcher.fetchTkv(tkvSystemId, sessionId);
     return row !== null;
   }
 

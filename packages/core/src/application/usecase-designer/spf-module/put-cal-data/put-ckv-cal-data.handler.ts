@@ -50,9 +50,7 @@ export class PutCkvCalDataHandler {
       command.spfModuleSystemId,
       command.ckvSystemId,
     );
-    const relevantParamSystemIds = payloadEntries.map(
-      p => p.parameterSystemId,
-    );
+    const relevantParamSystemIds = payloadEntries.map(p => p.parameterSystemId);
     const definitions = await this.uow
       .getModuleDefinitionRepository()
       .getParameterDefinitions(

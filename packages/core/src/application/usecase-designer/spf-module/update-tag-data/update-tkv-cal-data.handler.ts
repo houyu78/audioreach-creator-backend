@@ -55,9 +55,7 @@ export class UpdateTkvCalDataHandler {
       command.tagSystemId,
       command.tkvSystemId,
     );
-    const relevantParamSystemIds = payloadEntries.map(
-      p => p.parameterSystemId,
-    );
+    const relevantParamSystemIds = payloadEntries.map(p => p.parameterSystemId);
     const definitions = await this.uow
       .getModuleDefinitionRepository()
       .getParameterDefinitions(
