@@ -9,7 +9,6 @@ import type {
   UnitOfWork,
   EditOptions,
   SpfModuleBase,
-  ExistingPayloadRow,
   PayloadUpdate,
 } from '@arc/core';
 import {
@@ -552,10 +551,10 @@ export class TypeOrmModuleRepository implements ModuleRepository {
     return row !== null;
   }
 
-  async getCkvPayloads(
+  async getCkvPayloadEntries(
     spfModuleSystemId: number,
     ckvSystemId: number,
-  ): Promise<ExistingPayloadRow[]> {
+  ): Promise<{systemId: number; parameterSystemId: number}[]> {
     const sessionId = this.uow.getWriteContext().session.sessionId;
     const rows = await this.ckvOverlayFetcher.fetchPayloads(
       ckvSystemId,
@@ -624,10 +623,10 @@ export class TypeOrmModuleRepository implements ModuleRepository {
     return row !== null;
   }
 
-  async getTkvPayloads(
+  async getTkvPayloadEntries(
     _moduleTagIdMapSystemId: number,
     tkvSystemId: number,
-  ): Promise<ExistingPayloadRow[]> {
+  ): Promise<{systemId: number; parameterSystemId: number}[]> {
     const sessionId = this.uow.getWriteContext().session.sessionId;
     const rows = await this.tkvOverlayFetcher.fetchPayloads(
       tkvSystemId,

@@ -14,7 +14,7 @@ import {serializeParameterData} from '../../shared/serialize-elements.js';
 import {mapDtoToParameterCalibration} from '../get-cal-data/ckv-cal-data-dto.js';
 import type {Logger} from '../../../../shared/types/logger.interface.js';
 import {Result} from '../../../shared/result/result.js';
-import type {ExistingPayloadRow} from '../../../ports/persistence/repositories/module/module.repository.js';
+import type {PayloadEntry} from '../../../ports/persistence/repositories/module/module.repository.js';
 import type {ParameterDefinitionBase} from '../../../ports/persistence/repositories/module/module-definition.repository.js';
 import type {ParameterElementDto} from '../dto/element-dto.js';
 
@@ -46,11 +46,11 @@ export class PutCkvCalDataHandler {
     if (!exists) throw new ResourceNotFoundException('CKV not found');
 
     // Step 3: fetch existing payloads, then fetch definitions for those parameter IDs
-    const existingPayloads = await moduleRepo.getCkvPayloads(
+    const payloadEntries = await moduleRepo.getCkvPayloadEntries(
       command.spfModuleSystemId,
       command.ckvSystemId,
     );
-    const relevantParamSystemIds = existingPayloads.map(
+    const relevantParamSystemIds = payloadEntries.map(
       p => p.parameterSystemId,
     );
     const definitions = await this.uow
@@ -61,14 +61,14 @@ export class PutCkvCalDataHandler {
       );
 
     // Step 4: per-parameter validation + serialization
-    const payloadMap = new Map(existingPayloads.map(p => [p.systemId, p]));
+    const entryMap = new Map(payloadEntries.map(p => [p.systemId, p]));
     const defMap = new Map(definitions.map(d => [d.systemId, d]));
     const succeededParamSystemIds: number[] = [];
     const writeBatch: Array<{payloadSystemId: number; payload: Uint8Array}> =
       [];
 
     for (const param of command.parameters) {
-      const processed = this.processParam(param, payloadMap, defMap);
+      const processed = this.processParam(param, entryMap, defMap);
       succeededParamSystemIds.push(processed.payloadSystemId);
       writeBatch.push({
         payloadSystemId: processed.payloadSystemId,
@@ -99,19 +99,19 @@ export class PutCkvCalDataHandler {
 
   private processParam(
     param: {systemId: number; elements: ParameterElementDto[]},
-    payloadMap: Map<number, ExistingPayloadRow>,
+    entryMap: Map<number, PayloadEntry>,
     defMap: Map<number, ParameterDefinitionBase>,
   ): {payloadSystemId: number; paramSystemId: number; payload: Uint8Array} {
-    const existingPayload = payloadMap.get(param.systemId);
-    if (!existingPayload) {
+    const entry = entryMap.get(param.systemId);
+    if (!entry) {
       throw new ResourceNotFoundException(
         `Parameter payload not found: systemId=${param.systemId}`,
       );
     }
-    const def = defMap.get(existingPayload.parameterSystemId);
+    const def = defMap.get(entry.parameterSystemId);
     if (!def) {
       throw new Error(
-        `ParameterDefinition missing for parameterSystemId=${existingPayload.parameterSystemId} — DB integrity violation`,
+        `ParameterDefinition missing for parameterSystemId=${entry.parameterSystemId} — DB integrity violation`,
       );
     }
     if (def.isReadOnly) {
@@ -131,7 +131,7 @@ export class PutCkvCalDataHandler {
     }
     return {
       payloadSystemId: param.systemId,
-      paramSystemId: existingPayload.parameterSystemId,
+      paramSystemId: entry.parameterSystemId,
       payload: serialized.value,
     };
   }

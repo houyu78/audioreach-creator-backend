@@ -31,12 +31,12 @@ function makeModuleRepo(
     }),
     tagExists: jest.fn().mockResolvedValue(true),
     tkvExists: jest.fn().mockResolvedValue(true),
-    getTkvPayloads: jest
+    getTkvPayloadEntries: jest
       .fn()
       .mockResolvedValue([{systemId: 100, parameterSystemId: 200}]),
     setTkvData: jest.fn().mockResolvedValue(undefined),
     ckvExists: jest.fn(),
-    getCkvPayloads: jest.fn(),
+    getCkvPayloadEntries: jest.fn(),
     setCkvData: jest.fn(),
     findModuleForPatch: jest.fn(),
     renameModule: jest.fn(),
@@ -152,7 +152,7 @@ describe('UpdateTkvCalDataHandler', () => {
 
   it('throws ResourceNotFoundException when no existing payload row', async () => {
     const moduleRepo = makeModuleRepo({
-      getTkvPayloads: jest.fn().mockResolvedValue([]),
+      getTkvPayloadEntries: jest.fn().mockResolvedValue([]),
     });
     const uow = makeUow(moduleRepo, makeDefRepo());
     const handler = new UpdateTkvCalDataHandler(uow);

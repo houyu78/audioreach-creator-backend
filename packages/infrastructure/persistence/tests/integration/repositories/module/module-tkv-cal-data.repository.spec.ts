@@ -209,11 +209,11 @@ describe('TypeOrmModuleRepository — TKV cal data methods', () => {
     });
   });
 
-  describe('getTkvPayloads', () => {
+  describe('getTkvPayloadEntries', () => {
     it('returns all payload rows for the TKV', async () => {
       await seedPayload(ds);
       const repo = makeRepo(qr, sessionId);
-      const rows = await repo.getTkvPayloads(TAG_MAP_ID, TKV_ID);
+      const rows = await repo.getTkvPayloadEntries(TAG_MAP_ID, TKV_ID);
       expect(rows).toHaveLength(1);
       expect(rows[0].systemId).toBe(PAYLOAD_ID);
       expect(rows[0].parameterSystemId).toBe(PARAM_DEF_ID);
@@ -221,7 +221,7 @@ describe('TypeOrmModuleRepository — TKV cal data methods', () => {
 
     it('returns empty array when no payload rows exist', async () => {
       const repo = makeRepo(qr, sessionId);
-      const rows = await repo.getTkvPayloads(TAG_MAP_ID, TKV_ID);
+      const rows = await repo.getTkvPayloadEntries(TAG_MAP_ID, TKV_ID);
       expect(rows).toHaveLength(0);
     });
   });

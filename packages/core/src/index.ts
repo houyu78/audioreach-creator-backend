@@ -62,7 +62,7 @@ export type {EditOptions} from './application/ports/persistence/edit-options.js'
 // Module write path — port interfaces (LLD2 PATCH + AddModule)
 export type {
   ModuleRepository,
-  ExistingPayloadRow,
+  PayloadEntry,
   PayloadUpdate,
 } from './application/ports/persistence/repositories/module/module.repository.js';
 export type {ContainerRepository} from './application/ports/persistence/repositories/container/container.repository.js';

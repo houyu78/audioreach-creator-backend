@@ -198,10 +198,10 @@ describe('TypeOrmModuleRepository — CKV cal data', () => {
     expect(result).toBe(false);
   });
 
-  it('getCkvPayloads returns rows with systemId and parameterSystemId', async () => {
+  it('getCkvPayloadEntries returns rows with systemId and parameterSystemId', async () => {
     await seedPayload(ds);
     const repo = makeRepo(qr, sessionId);
-    const results = await repo.getCkvPayloads(MODULE_ID, CKV_ID);
+    const results = await repo.getCkvPayloadEntries(MODULE_ID, CKV_ID);
     expect(results).toHaveLength(1);
     expect(results[0].systemId).toBe(PAYLOAD_ID);
     expect(results[0].parameterSystemId).toBe(PARAM_DEF_ID);

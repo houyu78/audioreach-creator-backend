@@ -14,7 +14,7 @@ import type {KvData} from '../../../../../domain/entities/common/entities/kv-dat
 
 export type {SpfModuleBase} from '../../../../../domain/entities/usecase-data/module/spf-module.js';
 
-export interface ExistingPayloadRow {
+export interface PayloadEntry {
   systemId: number; // PK of CkvParameterPayload — matches param.systemId from client
   parameterSystemId: number; // FK → SpfModuleParameterDefinition.systemId
 }
@@ -122,10 +122,10 @@ export interface ModuleRepository {
 
   ckvExists(spfModuleSystemId: number, ckvSystemId: number): Promise<boolean>;
 
-  getCkvPayloads(
+  getCkvPayloadEntries(
     spfModuleSystemId: number,
     ckvSystemId: number,
-  ): Promise<ExistingPayloadRow[]>;
+  ): Promise<PayloadEntry[]>;
 
   setCkvData(
     spfModuleSystemId: number,
@@ -141,10 +141,10 @@ export interface ModuleRepository {
 
   tkvExists(tkvSystemId: number): Promise<boolean>;
 
-  getTkvPayloads(
+  getTkvPayloadEntries(
     moduleTagIdMapSystemId: number,
     tkvSystemId: number,
-  ): Promise<ExistingPayloadRow[]>;
+  ): Promise<PayloadEntry[]>;
 
   setTkvData(
     moduleTagIdMapSystemId: number,

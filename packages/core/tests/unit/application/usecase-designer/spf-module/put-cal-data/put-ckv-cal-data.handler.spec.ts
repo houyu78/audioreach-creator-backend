@@ -29,7 +29,7 @@ function makeModuleRepo(
       containerSystemId: 4,
     }),
     ckvExists: jest.fn().mockResolvedValue(true),
-    getCkvPayloads: jest
+    getCkvPayloadEntries: jest
       .fn()
       .mockResolvedValue([{systemId: 100, parameterSystemId: 200}]),
     setCkvData: jest.fn().mockResolvedValue(undefined),
@@ -135,7 +135,7 @@ describe('PutCkvCalDataHandler', () => {
 
   it('throws ResourceNotFoundException when no existing payload row (FR15)', async () => {
     const moduleRepo = makeModuleRepo({
-      getCkvPayloads: jest.fn().mockResolvedValue([]),
+      getCkvPayloadEntries: jest.fn().mockResolvedValue([]),
     });
     const uow = makeUow(moduleRepo, makeDefRepo());
     const handler = new PutCkvCalDataHandler(uow);
