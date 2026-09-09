@@ -181,14 +181,14 @@ describe('TkvOverlayFetcher.fetchModuleTagIdMap', () => {
     const ds = getTestDataSource();
     await seedBase(ds);
     const result = await makeFetcher(ds).fetchModuleTagIdMap(
-      TAG_MAP_ID,
+      TAG_DEF_ID,
       MODULE_ID,
       null,
     );
     expect(result).toBe(true);
   });
 
-  it('returns false when systemId does not match', async () => {
+  it('returns false when tagDefinitionSystemId does not match', async () => {
     const ds = getTestDataSource();
     await seedBase(ds);
     expect(
@@ -200,7 +200,7 @@ describe('TkvOverlayFetcher.fetchModuleTagIdMap', () => {
     const ds = getTestDataSource();
     await seedBase(ds);
     expect(
-      await makeFetcher(ds).fetchModuleTagIdMap(TAG_MAP_ID, 9999, null),
+      await makeFetcher(ds).fetchModuleTagIdMap(TAG_DEF_ID, 9999, null),
     ).toBe(false);
   });
 });
